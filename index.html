@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Doce Cálculo 2.0 — GelaCost PRO Evolution</title>
+
+  <!-- Ícone padrão e PWA para iPhone/iPad/Android -->
+  <link rel="icon" type="image/png" href="icone.png" />
+  <link rel="apple-touch-icon" href="icone.png" />
+  <meta name="apple-mobile-web-app-title" content="Custos 2.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ==================== TELA DE LOGIN FLUIDA ==================== -->
+  <div id="loginScreen" class="login-overlay">
+    <div class="login-card">
+      <div class="login-brand-icon">
+        <img src="icone.png" alt="Logo" onerror="this.style.display='none'; this.parentElement.innerHTML='🧁';" />
+      </div>
+      <div class="login-badge">Versão 2.0 • Banco Isolado Seguro</div>
+      <h1 class="login-title">Doce Cálculo <span>2.0</span></h1>
+      <p class="login-subtitle">Evolução fluida do GelaCost PRO. Digite a senha da equipe para sincronizar em tempo real.</p>
+
+      <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+        <div class="password-input-wrap">
+          <input
+            type="password"
+            id="sharedPasswordInput"
+            placeholder="Digite a senha da equipe..."
+            autocomplete="current-password"
+            required
+          />
+          <button
+            type="button"
+            class="btn-toggle-pwd"
+            onclick="togglePasswordVisibility()"
+            title="Mostrar ou ocultar senha"
+            tabindex="-1"
+          >
+            <span id="pwdEyeIcon">👁️</span>
+          </button>
+        </div>
+
+        <label class="remember-row">
+          <input type="checkbox" id="rememberAccessCheckbox" checked />
+          <span>Manter acesso desbloqueado neste aparelho</span>
+        </label>
+
+        <div id="loginErrorMsg" class="login-error" style="display: none;">
+          ⚠️ Senha incorreta. Verifique e tente novamente.
+        </div>
+
+        <button type="submit" id="btnLoginSubmit" class="btn btn-primary btn-lg login-submit-btn">
+          🔓 Acessar Sistema
+        </button>
+      </form>
+
+      <div class="login-footer-actions">
+        <button type="button" class="btn-link-subtle" onclick="enterOfflineMode()">
+          Entrar em Modo Local / Offline (61 insumos e 34 receitas pré-carregados)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CONTEÚDO PRINCIPAL DO APP ==================== -->
+  <div id="appContent" class="app-shell" style="display: none;">
+
+    <!-- TOP HEADER -->
+    <header class="app-header">
+      <div class="header-container">
+        <div class="brand" onclick="switchTab('recipes')" style="cursor: pointer;">
+          <div class="brand-icon">
+            <img src="icone.png" alt="Ícone" onerror="this.style.display='none'; this.parentElement.innerHTML='🧁';" />
+          </div>
+          <div>
+            <div class="brand-title">Doce Cálculo <span class="brand-version">2.0</span></div>
+            <div class="brand-subtitle">GelaCost PRO Evolution • Precificação &amp; Fichas Técnicas</div>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button
+            type="button"
+            id="btnFirebaseStatus"
+            class="sync-badge"
+            onclick="openFirebaseModal()"
+            title="Status da nuvem e sincronização (Coleção isolada v2)"
+          >
+            <span class="sync-dot" id="syncDot"></span>
+            <span id="syncStatusText">Verificando nuvem...</span>
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-header-action btn-sm"
+            onclick="openDataModal()"
+            title="Fazer backup, restaurar arquivo ou reimportar do GelaCost antigo"
+          >
+            💾 <span class="hide-mobile">Backup / Dados</span>
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-header-action btn-sm"
+            onclick="handleLogout()"
+            title="Bloquear tela / Sair"
+          >
+            🔒 <span class="hide-mobile">Sair</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- NAVIGATION TABS (Desktop Top Bar & Mobile Bottom Bar) -->
+    <nav class="nav-bar">
+      <div class="nav-container">
+        <button type="button" class="nav-tab active" data-tab="recipes" onclick="switchTab('recipes')">
+          <span class="nav-icon">🍰</span>
+          <span class="nav-label">Receitas</span>
+          <span class="tab-count" id="countRecipes">0</span>
+        </button>
+        <button type="button" class="nav-tab" data-tab="ingredients" onclick="switchTab('ingredients')">
+          <span class="nav-icon">🥣</span>
+          <span class="nav-label">Insumos</span>
+          <span class="tab-count" id="countIngredients">0</span>
+        </button>
+        <button type="button" class="nav-tab" data-tab="packagings" onclick="switchTab('packagings')">
+          <span class="nav-icon">🎁</span>
+          <span class="nav-label">Embalagens</span>
+          <span class="tab-count" id="countPackagings">0</span>
+        </button>
+        <button type="button" class="nav-tab" data-tab="goals" onclick="switchTab('goals')">
+          <span class="nav-icon">🎯</span>
+          <span class="nav-label">Metas &amp; Resumo</span>
+        </button>
+        <button type="button" class="nav-tab" data-tab="options" onclick="switchTab('options')">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">Opções</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <main class="main-container">
+
+      <!-- ==================== ABA 1: RECEITAS & PRECIFICAÇÃO ==================== -->
+      <section id="tab-recipes" class="tab-panel active">
+        <!-- Faixa de Resumo Rápido (KPIs) -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <span class="kpi-label">Catálogo de Receitas</span>
+            <span class="kpi-value" id="kpiTotalRecipes">0</span>
+            <span class="kpi-sub" id="kpiRecipesDetail">0 categorias • 0 bases</span>
+          </div>
+          <div class="kpi-card" onclick="switchTab('ingredients')" style="cursor: pointer;" title="Ir para Insumos">
+            <span class="kpi-label">Insumos &amp; Embalagens</span>
+            <span class="kpi-value" id="kpiTotalInputs">0</span>
+            <span class="kpi-sub" id="kpiInputsDetail">0 insumos • 0 embalagens</span>
+          </div>
+          <div class="kpi-card" onclick="switchTab('options')" style="cursor: pointer;" title="Configurar taxas e margens">
+            <span class="kpi-label">Margem &amp; Custos Globais</span>
+            <span class="kpi-value" id="kpiDefaultMargin">50%</span>
+            <span class="kpi-sub" id="kpiDefaultExtras">Luz/Gás: R$ 10,00 • Perda: 5%</span>
+          </div>
+          <div class="kpi-card" onclick="switchTab('goals')" style="cursor: pointer;" title="Abrir Simulador de Metas">
+            <span class="kpi-label">Despesas Fixas / Meta</span>
+            <span class="kpi-value" id="kpiMonthlyExpenses">R$ 84,00</span>
+            <span class="kpi-sub" id="kpiGoalHint">Simulador de metas &rarr;</span>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2>Catálogo de Produtos, Receitas &amp; Bases</h2>
+            <p>Consulte preços sugeridos, fichas técnicas e clique em qualquer card para ver a composição detalhada.</p>
+          </div>
+          <div class="section-actions">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAllCategories()" id="btnToggleAllCats">
+              📂 Recolher/Expandir Tudo
+            </button>
+            <button type="button" class="btn btn-primary btn-lg" onclick="openRecipeModal()">
+              ➕ Nova Receita
+            </button>
+          </div>
+        </div>
+
+        <!-- Barra de Busca + Filtro Rápido por Categoria -->
+        <div class="filter-bar-card">
+          <div class="toolbar" style="margin-bottom: 0.75rem;">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input
+                type="text"
+                id="searchRecipes"
+                placeholder="Buscar receita por nome, categoria ou ingrediente utilizado..."
+                oninput="renderRecipes()"
+              />
+              <button
+                type="button"
+                id="btnClearRecipeSearch"
+                class="search-clear-btn"
+                style="display: none;"
+                onclick="clearSearchInput('searchRecipes', renderRecipes)"
+                title="Limpar busca"
+              >&times;</button>
+            </div>
+            <div class="toolbar-right">
+              <select id="sortRecipesSelect" onchange="renderRecipes()" class="compact-select" title="Ordenar receitas">
+                <option value="alpha">🔤 Ordem Alfabética (A-Z)</option>
+                <option value="price_asc">💲 Menor Preço de Venda</option>
+                <option value="price_desc">💰 Maior Preço de Venda</option>
+                <option value="profit_desc">📈 Maior Lucro Unitário</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Pílulas de Categorias -->
+          <div id="recipeCategoryPills" class="category-pills-bar"></div>
+        </div>
+
+        <!-- Lista de Receitas Agrupadas -->
+        <div id="recipesContainer"></div>
+      </section>
+
+      <!-- ==================== ABA 2: INSUMOS (INGREDIENTES) ==================== -->
+      <section id="tab-ingredients" class="tab-panel">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2>Estoque de Insumos (Matérias-Primas)</h2>
+            <p>Altere qualquer preço diretamente na lista abaixo com <strong>1 clique</strong> (ou pressione <code>Enter</code>) para recalcular todas as receitas na hora!</p>
+          </div>
+        </div>
+
+        <!-- Card de Cadastro Rápido / Edição Completa de Insumo -->
+        <div class="card quick-form-card" id="ingredientFormCard">
+          <div class="card-title" id="ingredientFormTitle">➕ Cadastrar Novo Insumo</div>
+          <form id="ingredientForm" onsubmit="saveIngredient(event)">
+            <input type="hidden" id="ingId" />
+            <div class="form-grid form-grid-ing">
+              <div class="form-group">
+                <label for="ingName">Nome do Insumo *</label>
+                <input type="text" id="ingName" required placeholder="Ex: Leite Condensado, Creme de Avelã, Farinha..." />
+              </div>
+              <div class="form-group">
+                <label for="ingPrice">Preço Pago no Pacote (R$) *</label>
+                <input type="number" id="ingPrice" inputmode="decimal" step="0.01" min="0" required placeholder="Ex: 4.69" />
+              </div>
+              <div class="form-group">
+                <label for="ingQty">Qtd. na Embalagem Fechada *</label>
+                <input type="number" id="ingQty" inputmode="decimal" step="any" min="0.0001" required placeholder="Ex: 395 ou 1000" />
+              </div>
+              <div class="form-group">
+                <label for="ingUnit">Unidade do Pacote *</label>
+                <select id="ingUnit" required>
+                  <option value="g">Gramas (g)</option>
+                  <option value="kg">Quilograma (kg)</option>
+                  <option value="ml">Mililitros (ml)</option>
+                  <option value="l">Litro (L)</option>
+                  <option value="un">Unidade (un)</option>
+                </select>
+              </div>
+              <div class="form-group form-actions-inline">
+                <button type="submit" class="btn btn-primary" id="btnSaveIng" style="flex: 1;">
+                  💾 Salvar Insumo
+                </button>
+                <button type="button" class="btn btn-secondary" id="btnCancelIng" style="display: none;" onclick="resetIngredientForm()">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Barra de Busca, Filtro de Unidade e Visualização de Insumos -->
+        <div class="card">
+          <div class="toolbar">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input
+                type="text"
+                id="searchIngredients"
+                placeholder="Buscar insumo por nome..."
+                oninput="renderIngredients()"
+              />
+              <button
+                type="button"
+                id="btnClearIngSearch"
+                class="search-clear-btn"
+                style="display: none;"
+                onclick="clearSearchInput('searchIngredients', renderIngredients)"
+              >&times;</button>
+            </div>
+
+            <div class="unit-filter-pills" id="ingUnitFilterBar">
+              <button type="button" class="pill-btn active" data-unit="all" onclick="setIngUnitFilter('all')">Todos</button>
+              <button type="button" class="pill-btn" data-unit="weight" onclick="setIngUnitFilter('weight')">⚖️ Peso (g/kg)</button>
+              <button type="button" class="pill-btn" data-unit="volume" onclick="setIngUnitFilter('volume')">🥛 Líquidos (ml/L)</button>
+              <button type="button" class="pill-btn" data-unit="unit" onclick="setIngUnitFilter('unit')">🔢 Unidades (un)</button>
+            </div>
+
+            <div class="view-toggle-group">
+              <button type="button" class="btn btn-secondary btn-sm active" id="btnIngViewTable" onclick="setIngViewMode('table')" title="Visão em Tabela com Edição Rápida">
+                📋 Tabela Rápida
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnIngViewCards" onclick="setIngViewMode('cards')" title="Visão em Cards">
+                🗂️ Cards
+              </button>
+            </div>
+          </div>
+
+          <!-- Container de Tabela ou Cards de Insumos -->
+          <div id="ingredientsListWrapper"></div>
+        </div>
+      </section>
+
+      <!-- ==================== ABA 3: EMBALAGENS ==================== -->
+      <section id="tab-packagings" class="tab-panel">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2>Estoque de Embalagens &amp; Insumos Externos</h2>
+            <p>Potes, etiquetas, saquinhos, caixas, fitas e tags. Altere o preço ou a quantidade do pacote diretamente na lista!</p>
+          </div>
+        </div>
+
+        <div class="card quick-form-card" id="packagingFormCard">
+          <div class="card-title" id="packagingFormTitle">➕ Cadastrar Nova Embalagem</div>
+          <form id="packagingForm" onsubmit="savePackaging(event)">
+            <input type="hidden" id="pkgId" />
+            <div class="form-grid form-grid-pkg">
+              <div class="form-group">
+                <label for="pkgName">Nome da Embalagem *</label>
+                <input type="text" id="pkgName" required placeholder="Ex: Pote Redondo, Saquinho 6x7, Etiqueta, Fita cetim..." />
+              </div>
+              <div class="form-group">
+                <label for="pkgPrice">Preço Pago no Pacote (R$) *</label>
+                <input type="number" id="pkgPrice" inputmode="decimal" step="0.01" min="0" required placeholder="Ex: 57.38" />
+              </div>
+              <div class="form-group">
+                <label for="pkgQty">Unidades no Pacote *</label>
+                <input type="number" id="pkgQty" inputmode="decimal" step="any" min="0.0001" required placeholder="Ex: 100 ou 3180" />
+              </div>
+              <div class="form-group form-actions-inline">
+                <button type="submit" class="btn btn-primary" id="btnSavePkg" style="flex: 1;">
+                  💾 Salvar Embalagem
+                </button>
+                <button type="button" class="btn btn-secondary" id="btnCancelPkg" style="display: none;" onclick="resetPackagingForm()">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="toolbar">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input
+                type="text"
+                id="searchPackagings"
+                placeholder="Buscar embalagem por nome..."
+                oninput="renderPackagings()"
+              />
+              <button
+                type="button"
+                id="btnClearPkgSearch"
+                class="search-clear-btn"
+                style="display: none;"
+                onclick="clearSearchInput('searchPackagings', renderPackagings)"
+              >&times;</button>
+            </div>
+
+            <div class="view-toggle-group">
+              <button type="button" class="btn btn-secondary btn-sm active" id="btnPkgViewTable" onclick="setPkgViewMode('table')">
+                📋 Tabela Rápida
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnPkgViewCards" onclick="setPkgViewMode('cards')">
+                🗂️ Cards
+              </button>
+            </div>
+          </div>
+
+          <div id="packagingsListWrapper"></div>
+        </div>
+      </section>
+
+      <!-- ==================== ABA 4: METAS & RESUMO DE RENTABILIDADE ==================== -->
+      <section id="tab-goals" class="tab-panel">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2>🎯 Simulador de Metas &amp; Resumo Geral de Rentabilidade</h2>
+            <p>Descubra quantas unidades vender no mês para pagar todas as contas fixas e compare a margem de todas as receitas lado a lado.</p>
+          </div>
+        </div>
+
+        <!-- Simulador de Metas (Com salvamento automático!) -->
+        <div class="card simulator-card">
+          <div class="simulator-header">
+            <div>
+              <div class="card-title" style="margin-bottom: 0.25rem;">🎯 Simulador Inteligente de Meta Mensal</div>
+              <p class="sub-note">Os valores digitados aqui agora ficam <strong>salvos automaticamente</strong> e calculam sua meta na hora.</p>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" onclick="fillAverageCatalogPrice()">
+              ✨ Usar Preço Médio do Catálogo
+            </button>
+          </div>
+
+          <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-top: 1rem;">
+            <div class="form-group">
+              <label for="goalFixedCost">Total Despesas Fixas Mensais (Luz, MEI, Internet, etc.) — R$</label>
+              <input
+                type="number"
+                id="goalFixedCost"
+                inputmode="decimal"
+                step="0.01"
+                min="0"
+                placeholder="Ex: 84.00"
+                oninput="onGoalInputsChange()"
+              />
+              <small>Valor salvo automaticamente no seu painel.</small>
+            </div>
+            <div class="form-group">
+              <label for="goalTargetPrice">Preço de Venda Médio Unitário (R$)</label>
+              <input
+                type="number"
+                id="goalTargetPrice"
+                inputmode="decimal"
+                step="0.01"
+                min="0"
+                placeholder="Ex: 10.00"
+                oninput="onGoalInputsChange()"
+              />
+              <small id="goalCatalogAvgHint">Custo médio atual das receitas: R$ 0,00</small>
+            </div>
+            <div class="form-group">
+              <label for="goalWorkDays">Dias Trabalhados no Mês</label>
+              <input
+                type="number"
+                id="goalWorkDays"
+                inputmode="numeric"
+                step="1"
+                min="1"
+                max="31"
+                value="26"
+                oninput="onGoalInputsChange()"
+              />
+              <small>Para calcular a meta de vendas por dia.</small>
+            </div>
+          </div>
+
+          <div id="goalResultBanner" style="margin-top: 1.25rem;"></div>
+        </div>
+
+        <!-- Tabela Geral de Rentabilidade (Dashboard) -->
+        <div class="card">
+          <div class="section-header" style="margin-bottom: 1rem;">
+            <div>
+              <div class="card-title" style="margin-bottom: 0.2rem;">📊 Resumo Geral de Rentabilidade (Todas as Receitas)</div>
+              <p class="sub-note">Clique em qualquer produto para abrir a <strong>Ficha Técnica</strong> ou editar.</p>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input
+                type="text"
+                id="searchDashboard"
+                placeholder="Filtrar produto no resumo geral..."
+                oninput="renderDashboardTable()"
+              />
+            </div>
+            <select id="filterDashboardCategory" class="compact-select" onchange="renderDashboardTable()">
+              <option value="all">Todas as Categorias</option>
+            </select>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table dashboard-table">
+              <thead>
+                <tr>
+                  <th>Sabor / Produto</th>
+                  <th>Categoria</th>
+                  <th>Rendimento</th>
+                  <th>Custo Un.</th>
+                  <th>Preço Venda</th>
+                  <th>Preço iFood</th>
+                  <th>Lucro / Un.</th>
+                  <th>Margem</th>
+                  <th style="text-align: right;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="dashboardTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== ABA 5: OPÇÕES & CATEGORIAS ==================== -->
+      <section id="tab-options" class="tab-panel">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2>⚙️ Configurações de Negócio &amp; Categorias</h2>
+            <p>Defina as taxas globais de venda, custos indiretos por batida/receita e gerencie as categorias de produtos sem janelas bloqueantes.</p>
+          </div>
+        </div>
+
+        <div class="options-two-col">
+          <!-- Coluna 1: Parâmetros Globais de Precificação -->
+          <div class="card">
+            <div class="card-title">💼 Parâmetros Globais de Precificação</div>
+            <p class="sub-note" style="margin-bottom: 1.15rem;">
+              Estes valores são aplicados automaticamente a todas as receitas (e você também pode personalizar individualmente dentro de cada receita quando quiser).
+            </p>
+
+            <form id="globalOptionsForm" onsubmit="saveGlobalOptions(event)">
+              <div class="form-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 1rem;">
+                <div class="form-group">
+                  <label for="optProfitMargin">📈 Margem de Lucro Desejada (%)</label>
+                  <input type="number" id="optProfitMargin" inputmode="decimal" step="0.5" min="0" max="95" required />
+                  <small>Margem sobre venda (Ex: 50% dobra o custo unitário).</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="optUtilityCost">🔥 Luz / Gás / Água por Receita (R$)</label>
+                  <input type="number" id="optUtilityCost" inputmode="decimal" step="0.10" min="0" required />
+                  <small>Custo indireto diluído pelo rendimento da receita.</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="optWasteMargin">🗑️ Margem de Perda / Desperdício (%)</label>
+                  <input type="number" id="optWasteMargin" inputmode="decimal" step="0.5" min="0" max="100" required />
+                  <small>Percentual de segurança aplicado sobre os ingredientes.</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="optIfoodFee">🛵 Taxa do iFood / Apps (%)</label>
+                  <input type="number" id="optIfoodFee" inputmode="decimal" step="0.1" min="0" max="95" required />
+                  <small>Calculado por dentro para proteger seu lucro líquido.</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="optDebitFee">💳 Taxa Cartão Débito (%)</label>
+                  <input type="number" id="optDebitFee" inputmode="decimal" step="0.01" min="0" max="95" />
+                  <small>Exibido na Ficha Técnica da receita.</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="optCreditFee">💳 Taxa Cartão Crédito (%)</label>
+                  <input type="number" id="optCreditFee" inputmode="decimal" step="0.01" min="0" max="95" />
+                  <small>Exibido na Ficha Técnica da receita.</small>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                💾 Salvar Configurações Globais
+              </button>
+            </form>
+          </div>
+
+          <!-- Coluna 2: Gerenciador Fluido de Categorias -->
+          <div class="card">
+            <div class="card-title">🏷️ Gerenciar Categorias de Produtos</div>
+            <p class="sub-note" style="margin-bottom: 1rem;">
+              Crie, renomeie direto na linha ou organize as categorias do seu catálogo.
+            </p>
+
+            <form id="newCategoryForm" onsubmit="handleCreateCategory(event)" class="inline-add-bar" style="margin-bottom: 1.15rem;">
+              <input
+                type="text"
+                id="newCategoryNameInput"
+                placeholder="Nome da nova categoria (Ex: Bolos no Pote, Sobremesas...)"
+                required
+              />
+              <button type="submit" class="btn btn-primary">
+                ➕ Criar Categoria
+              </button>
+            </form>
+
+            <div id="categoriesManagerList" class="categories-manager-list"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ==================== MODAL FLUIDO: CRIAR / EDITAR RECEITA ==================== -->
+  <div id="recipeModal" class="modal-backdrop">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-header">
+        <div>
+          <h3 id="recipeModalTitle">🍰 Editar Receita</h3>
+          <p id="recipeModalSubtitle" class="modal-subtitle">Altere os ingredientes e veja o custo e preço de venda em tempo real abaixo.</p>
+        </div>
+        <button type="button" class="modal-close" onclick="closeRecipeModal()" title="Fechar (Esc)">&times;</button>
+      </div>
+
+      <form id="recipeForm" onsubmit="saveRecipeFromModal(event)">
+        <div class="modal-body">
+          <input type="hidden" id="recId" />
+
+          <!-- Bloco 1: Identificação, Categoria e Rendimento -->
+          <div class="builder-section">
+            <div class="form-grid" style="grid-template-columns: 2fr 1.4fr 0.9fr 0.9fr;">
+              <div class="form-group">
+                <label for="recName">Nome da Receita / Produto *</label>
+                <input
+                  type="text"
+                  id="recName"
+                  required
+                  placeholder="Ex: Churros Pote Redondo com Doce de Leite"
+                  oninput="updateRecipeLivePreview()"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="recCategorySelect">Categoria *</label>
+                <div style="display: flex; gap: 0.4rem;">
+                  <select id="recCategorySelect" style="flex: 1;" onchange="onModalCategorySelectChange(this)"></select>
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    onclick="toggleInlineNewCatBox()"
+                    title="Criar nova categoria sem sair da receita"
+                  >➕</button>
+                </div>
+                <!-- Mini caixa inline para criar categoria sem prompt() e sem fechar o modal -->
+                <div id="inlineNewCatBox" style="display: none; margin-top: 0.45rem; gap: 0.35rem;">
+                  <input type="text" id="inlineNewCatInput" placeholder="Nova categoria..." style="padding: 0.4rem 0.6rem; font-size: 0.85rem;" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmInlineNewCategory();}" />
+                  <button type="button" class="btn btn-primary btn-sm" onclick="confirmInlineNewCategory()">OK</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="recYieldQty">Rendimento (Qtd) *</label>
+                <input
+                  type="number"
+                  id="recYieldQty"
+                  inputmode="decimal"
+                  step="any"
+                  min="0.01"
+                  required
+                  value="10"
+                  oninput="updateRecipeLivePreview()"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="recYieldUnit">Unidade do Rendimento</label>
+                <input
+                  type="text"
+                  id="recYieldUnit"
+                  value="unidades"
+                  placeholder="unidades, potes..."
+                  oninput="updateRecipeLivePreview()"
+                />
+              </div>
+            </div>
+
+            <!-- Opção de Sub-receita / Base -->
+            <div class="base-recipe-banner">
+              <label class="base-checkbox-label">
+                <input type="checkbox" id="recIsBase" onchange="onToggleRecIsBase()" />
+                <span>🍲 <strong>Esta receita é uma Base / Sub-receita</strong> (ex: Ganache, Recheio, Massa Base que pode ser usada como ingrediente em outras receitas)</span>
+              </label>
+              <div id="recBaseWeightGroup" class="base-weight-group" style="display: none;">
+                <label for="recBaseYieldWeight">Peso/Volume Total que esta Base rende (p/ uso em gramas/ml):</label>
+                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                  <input
+                    type="number"
+                    id="recBaseYieldWeight"
+                    inputmode="decimal"
+                    step="any"
+                    min="0"
+                    placeholder="Auto (soma dos ingredientes)"
+                    style="width: 140px;"
+                    oninput="updateRecipeLivePreview()"
+                  />
+                  <select id="recBaseYieldUnit" style="width: 90px;" onchange="updateRecipeLivePreview()">
+                    <option value="g">g</option>
+                    <option value="ml">ml</option>
+                    <option value="un">un</option>
+                  </select>
+                  <span id="recAutoWeightHint" class="sub-note"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bloco 2: Ingredientes e Sub-receitas -->
+          <div class="builder-section">
+            <div class="builder-section-header">
+              <div>
+                <div class="builder-section-title">1. 🥣 Ingredientes &amp; Sub-receitas (O que vai DENTRO do produto)</div>
+                <small style="color: var(--text-muted);">
+                  Pesquise entre os insumos ou <strong>🍲 Sub-receitas Base</strong>, digite a quantidade e pressione <code>Enter</code> para adicionar rapidamente!
+                </small>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" onclick="toggleQuickNewIngInModal()">
+                ➕ Cadastrar Insumo Novo Aqui
+              </button>
+            </div>
+
+            <!-- Mini formulário inline para criar um insumo novo sem sair da receita -->
+            <div id="modalQuickNewIngBox" class="inline-quick-create-box" style="display: none;">
+              <div class="quick-create-title">✨ Novo Insumo Rápido (já será adicionado à receita)</div>
+              <div class="form-grid" style="grid-template-columns: 2fr 1fr 1fr 1fr auto;">
+                <input type="text" id="qIngName" placeholder="Nome do insumo" />
+                <input type="number" id="qIngPrice" inputmode="decimal" step="0.01" placeholder="Preço R$" />
+                <input type="number" id="qIngQty" inputmode="decimal" step="any" placeholder="Qtd pacote" />
+                <select id="qIngUnit">
+                  <option value="g">g</option>
+                  <option value="kg">kg</option>
+                  <option value="ml">ml</option>
+                  <option value="l">L</option>
+                  <option value="un">un</option>
+                </select>
+                <div style="display: flex; gap: 0.35rem;">
+                  <button type="button" class="btn btn-primary btn-sm" onclick="saveQuickIngFromRecipeModal()">Salvar &amp; Usar</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickNewIngInModal()">✕</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Barra Rápida de Adição com Busca (Combobox Fluido) -->
+            <div class="quick-add-item-bar">
+              <div class=" searchable-select-wrap" style="flex: 2.2; min-width: 240px;">
+                <input
+                  type="text"
+                  id="ingSearchFilterInput"
+                  placeholder="🔍 Digite para filtrar insumo ou sub-receita..."
+                  oninput="filterModalIngSelect()"
+                  onfocus="filterModalIngSelect()"
+                  class="combo-filter-input"
+                />
+                <select id="modalAddIngSelect" onchange="onModalAddIngSelectChange()">
+                  <option value="">-- Selecione o Insumo ou Sub-receita --</option>
+                </select>
+              </div>
+
+              <div style="flex: 0.9; min-width: 110px;">
+                <input
+                  type="number"
+                  id="modalAddIngQty"
+                  inputmode="decimal"
+                  step="any"
+                  min="0.0001"
+                  placeholder="Qtd usada"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();addSelectedIngToDraft();}"
+                />
+              </div>
+
+              <div style="flex: 0.7; min-width: 95px;">
+                <select id="modalAddIngUnit">
+                  <option value="g">g</option>
+                  <option value="kg">kg</option>
+                  <option value="ml">ml</option>
+                  <option value="l">L</option>
+                  <option value="un">un</option>
+                </select>
+              </div>
+
+              <button type="button" class="btn btn-primary" onclick="addSelectedIngToDraft()">
+                ➕ Adicionar
+              </button>
+            </div>
+
+            <!-- Lista de Ingredientes/Sub-receitas da Receita -->
+            <div id="draftIngredientsContainer" class="draft-items-list"></div>
+          </div>
+
+          <!-- Bloco 3: Embalagens -->
+          <div class="builder-section">
+            <div class="builder-section-header">
+              <div>
+                <div class="builder-section-title">2. 🎁 Embalagens &amp; Insumos Externos (Para o lote inteiro)</div>
+                <small style="color: var(--text-muted);">
+                  Informe quantas unidades de embalagem são usadas para o <strong>rendimento total</strong> desta receita.
+                </small>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" onclick="toggleQuickNewPkgInModal()">
+                ➕ Cadastrar Embalagem Nova Aqui
+              </button>
+            </div>
+
+            <!-- Mini formulário inline para criar embalagem sem sair da receita -->
+            <div id="modalQuickNewPkgBox" class="inline-quick-create-box" style="display: none;">
+              <div class="quick-create-title">✨ Nova Embalagem Rápida (já será adicionada à receita)</div>
+              <div class="form-grid" style="grid-template-columns: 2fr 1fr 1fr auto;">
+                <input type="text" id="qPkgName" placeholder="Nome da embalagem" />
+                <input type="number" id="qPkgPrice" inputmode="decimal" step="0.01" placeholder="Preço pacote R$" />
+                <input type="number" id="qPkgQty" inputmode="decimal" step="any" placeholder="Unid. no pacote" />
+                <div style="display: flex; gap: 0.35rem;">
+                  <button type="button" class="btn btn-primary btn-sm" onclick="saveQuickPkgFromRecipeModal()">Salvar &amp; Usar</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickNewPkgInModal()">✕</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Barra Rápida de Adição de Embalagem -->
+            <div class="quick-add-item-bar">
+              <div class="searchable-select-wrap" style="flex: 2.2; min-width: 240px;">
+                <input
+                  type="text"
+                  id="pkgSearchFilterInput"
+                  placeholder="🔍 Digite para filtrar embalagem..."
+                  oninput="filterModalPkgSelect()"
+                  onfocus="filterModalPkgSelect()"
+                  class="combo-filter-input"
+                />
+                <select id="modalAddPkgSelect" onchange="onModalAddPkgSelectChange()">
+                  <option value="">-- Selecione a Embalagem --</option>
+                </select>
+              </div>
+
+              <div style="flex: 1; min-width: 130px; display: flex; gap: 0.35rem;">
+                <input
+                  type="number"
+                  id="modalAddPkgQty"
+                  inputmode="decimal"
+                  step="any"
+                  min="0.0001"
+                  placeholder="Qtd (un)"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();addSelectedPkgToDraft();}"
+                />
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  onclick="setModalPkgQtyToYield()"
+                  title="Preencher com o número do rendimento da receita"
+                >= Rend.</button>
+              </div>
+
+              <button type="button" class="btn btn-primary" onclick="addSelectedPkgToDraft()">
+                ➕ Adicionar
+              </button>
+            </div>
+
+            <!-- Lista de Embalagens da Receita -->
+            <div id="draftPackagingsContainer" class="draft-items-list"></div>
+          </div>
+
+          <!-- Bloco 4: Custos Indiretos, Margem e Observações (Personalizáveis por Receita) -->
+          <details class="builder-section advanced-recipe-details">
+            <summary class="builder-section-title" style="cursor: pointer;">
+              3. ⚙️ Personalizar Custos Indiretos, Margem, Preço Fixo ou Modo de Preparo (Opcional)
+            </summary>
+            <div style="margin-top: 0.9rem;">
+              <p class="sub-note" style="margin-bottom: 0.85rem;">
+                Deixe em branco para usar os padrões globais da aba Opções (<span id="modalGlobalDefaultsHint"></span>), ou preencha abaixo para personalizar apenas esta receita:
+              </p>
+              <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); margin-bottom: 1rem;">
+                <div class="form-group">
+                  <label for="recCustomUtility">Luz/Gás nesta Receita (R$)</label>
+                  <input
+                    type="number"
+                    id="recCustomUtility"
+                    inputmode="decimal"
+                    step="0.10"
+                    min="0"
+                    placeholder="Padrão global"
+                    oninput="updateRecipeLivePreview()"
+                  />
+                  <small>Coloque 0 se não usar fogão/forno</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="recCustomWaste">Perda / Desperdício (%)</label>
+                  <input
+                    type="number"
+                    id="recCustomWaste"
+                    inputmode="decimal"
+                    step="0.5"
+                    min="0"
+                    placeholder="Padrão global"
+                    oninput="updateRecipeLivePreview()"
+                  />
+                  <small>% sobre os ingredientes</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="recCustomMargin">Margem Desejada (%)</label>
+                  <input
+                    type="number"
+                    id="recCustomMargin"
+                    inputmode="decimal"
+                    step="0.5"
+                    min="0"
+                    max="95"
+                    placeholder="Padrão global"
+                    oninput="updateRecipeLivePreview()"
+                  />
+                  <small>Ex: 50% dobra o custo unitário</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="recCustomPrice">Preço de Venda Praticado (R$)</label>
+                  <input
+                    type="number"
+                    id="recCustomPrice"
+                    inputmode="decimal"
+                    step="0.01"
+                    min="0"
+                    placeholder="Automático (Sugerido)"
+                    oninput="updateRecipeLivePreview()"
+                  />
+                  <small>Fixa um preço manual de venda</small>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="recNotes">📝 Modo de Preparo / Observações da Ficha Técnica</label>
+                <textarea
+                  id="recNotes"
+                  rows="2"
+                  placeholder="Anote tempo de cozimento, peso de porcionamento, validade ou dicas para a equipe..."
+                ></textarea>
+              </div>
+            </div>
+          </details>
+
+          <!-- BARRA AO VIVO DE PRECIFICAÇÃO (LIVE PREVIEW) -->
+          <div class="live-preview-box">
+            <div class="live-preview-header">
+              <strong>⚡ Prévia Financeira em Tempo Real</strong>
+              <span id="livePreviewYieldText" class="badge badge-unit">Rendimento: 10 unidades</span>
+            </div>
+            <div class="live-preview-grid">
+              <div class="preview-stat">
+                <div class="p-label">Custo Total do Lote</div>
+                <div class="p-val" id="prevBatchCost">R$ 0,00</div>
+                <div class="p-sub" id="prevBatchSub">Insumos + Emb. + Adic.</div>
+              </div>
+              <div class="preview-stat">
+                <div class="p-label">Custo Unitário</div>
+                <div class="p-val" id="prevUnitCost">R$ 0,00</div>
+                <div class="p-sub" id="prevUnitBreakdown">Ins: R$ 0 • Emb: R$ 0</div>
+              </div>
+              <div class="preview-stat highlight-green">
+                <div class="p-label">Preço Venda / Un.</div>
+                <div class="p-val" id="prevSuggestedPrice">R$ 0,00</div>
+                <div class="p-sub" id="prevProfitSub">Lucro: R$ 0,00 / un</div>
+              </div>
+              <div class="preview-stat highlight-ifood">
+                <div class="p-label" id="prevIfoodLabel">Preço iFood (+12%)</div>
+                <div class="p-val" id="prevIfoodPrice">R$ 0,00</div>
+                <div class="p-sub">Protege seu lucro líquido</div>
+              </div>
+              <div class="preview-stat">
+                <div class="p-label">Lucro do Lote Inteiro</div>
+                <div class="p-val" id="prevBatchProfit" style="color: var(--success);">R$ 0,00</div>
+                <div class="p-sub" id="prevMarginSub">Margem: 50%</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeRecipeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-lg">💾 Salvar Receita</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: FICHA TÉCNICA COMPLETA ("REVELAR") ==================== -->
+  <div id="revealModal" class="modal-backdrop">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 id="revealTitle">📄 Ficha Técnica da Receita</h3>
+        <button type="button" class="modal-close" onclick="closeRevealModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="revealBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+        <button type="button" class="btn btn-outline" id="btnRevealEdit">✏️ Editar Receita</button>
+        <button type="button" class="btn btn-primary" onclick="closeRevealModal()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: BACKUP, IMPORTAÇÃO & MIGRAÇÃO ==================== -->
+  <div id="dataModal" class="modal-backdrop">
+    <div class="modal-dialog modal-md">
+      <div class="modal-header">
+        <h3>💾 Backup, Restauração &amp; Migração</h3>
+        <button type="button" class="modal-close" onclick="closeDataModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.92rem; color: var(--text-muted); margin-bottom: 1.15rem;">
+          Seus dados da versão 2.0 ficam salvos em uma coleção/documento separado (<code>empresa/dados_v2</code>) para nunca alterar ou sobrescrever o seu sistema antigo (<code>empresa/dados</code>).
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+          <button type="button" class="btn btn-primary btn-lg" onclick="exportBackupJSON()" style="justify-content: center;">
+            ⬇️ Baixar Arquivo de Backup (.JSON)
+          </button>
+
+          <label class="btn btn-secondary btn-lg" style="justify-content: center; cursor: pointer;">
+            📂 Carregar Arquivo de Backup (.JSON)
+            <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="importBackupJSON(event)" />
+          </label>
+
+          <hr style="border: none; border-top: 1px solid var(--border); margin: 0.4rem 0;" />
+
+          <button type="button" class="btn btn-outline" onclick="pullFreshCopyFromLegacyFirestore()" style="justify-content: center;">
+            🔄 Importar Cópia Atualizada do GelaCost Antigo (Nuvem)
+          </button>
+          <small style="text-align: center; color: var(--text-muted);">
+            Lê os dados atuais de <code>empresa/dados</code> (GelaCost PRO 1.0) e traz para a versão 2.0 sem modificar o sistema antigo.
+          </small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeDataModal()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: STATUS DO FIREBASE ==================== -->
+  <div id="firebaseModal" class="modal-backdrop">
+    <div class="modal-dialog modal-md">
+      <div class="modal-header">
+        <h3>☁️ Sincronização em Tempo Real (Firebase)</h3>
+        <button type="button" class="modal-close" onclick="closeFirebaseModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="card" style="background: var(--bg-subtle); margin-bottom: 1rem; padding: 1rem;">
+          <strong id="fbModalStatusTitle">Status da Conexão:</strong>
+          <p id="fbModalStatusDesc" style="font-size: 0.88rem; color: var(--text-muted); margin-top: 0.3rem;"></p>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="fbStoreDocId">Documento no Firestore (Isolado do sistema antigo):</label>
+          <input type="text" id="fbStoreDocId" value="dados_v2" />
+          <small>Padrão seguro: <code>dados_v2</code> dentro da coleção <code>empresa</code> (o sistema antigo usa <code>dados</code>).</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeFirebaseModal()">Fechar</button>
+        <button type="button" class="btn btn-primary" onclick="saveCustomDocId()">☁️ Reconectar e Sincronizar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- FIREBASE SDK (Compat para funcionamento direto via GitHub Pages ou arquivo local) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+
+  <!-- SCRIPTS DO SISTEMA -->
+  <script src="seed-data.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
